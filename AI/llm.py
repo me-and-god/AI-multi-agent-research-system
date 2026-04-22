@@ -1,0 +1,59 @@
+# This file contains the llm model that generates the reply as per the prompt provided accordingly
+
+
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_KEY=os.getenv("API_KEY")
+
+class AIClient:
+    def __init__(self):
+        self.url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
+        self.headers = {
+            "Authorization":f"Bearer {API_KEY}",
+            "Content-Type":"application/json"
+        }
+
+    def ask(self,prompt):
+        data = {
+            "model":"gemini-2.5-flash-lite",
+            "messages":[
+                {
+                    "role":"user",
+                    "content":prompt
+                }
+            ]
+        }
+        for _ in range(3):
+            try:
+                response = requests.post(
+                    url=self.url,
+                    headers=self.headers,
+                    json=data,
+                    timeout=10
+                )
+                if response.status_code != 200:
+                    return response.text
+
+                reply = response.json()
+                if "choices" in reply:
+                    return reply["choices"][0]["message"]["content"]
+                elif "error" in reply:
+                    return reply["error"]["message"]
+                else:
+                    return reply
+
+            except Exception as e:
+                print("Error: ",e)
+                print("Retrying...")
+
+
+
+
+
+client = AIClient()
+def get_client():
+    return client
